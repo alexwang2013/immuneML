@@ -13,6 +13,7 @@ class Metric(Enum):
     RECALL = "recall_score"
     AUC = "roc_auc_score"
     LOG_LOSS = "log_loss"
+    R2 = "r2_score"
 
     @staticmethod
     def get_search_criterion(metric):
