@@ -48,7 +48,7 @@ class PreprocessorLasso(Preprocessor):
 
     @staticmethod
     def process(dataset: RepertoireDataset, params: dict) -> RepertoireDataset:
-        path = params['result_path']
+        path = params['result_path'] / str(params['alpha']) / str(params['k'])
         PathBuilder.build(path)
 
         dataset3 = dataset.clone()
@@ -69,62 +69,73 @@ class PreprocessorLasso(Preprocessor):
             filename="dataset.pkl"
         ))
 
-        training_input = np.array(d1.encoded_data.examples.A)*10000
-        training_output = np.array(d1.encoded_data.labels[params['label']])*10000
+        training_input = np.array(d1.encoded_data.examples.A)
+        training_output = np.array(d1.encoded_data.labels[params['label']])
 
         diomio = Lasso(alpha=params['alpha'], fit_intercept=True, normalize=True, max_iter=5000)
         diomio.fit(training_input, training_output) # , sample_weight=sw_train)
         aa = diomio.coef_
 
-        keep_list = [x for (i, x) in zip(aa, d1.encoded_data.feature_names) if i != 0]
-        if not keep_list:
+        kmer_keep_list = [x for (i, x) in zip(aa, d1.encoded_data.feature_names) if i != 0]
+        if not kmer_keep_list:
             return dataset
         logging.info('UUUAHHHAHHAAAAAAAAAAAAAAAAAAAAAA')
         logging.info('UUUAHHHAHHAAAAAAAAAAAAAAAAAAAAAA')
         logging.info('UUUAHHHAHHAAAAAAAAAAAAAAAAAAAAAA')
+        print('UUUAHHHAHHAAAAAAAAAAAAAAAAAAAAAA')
+        print('UUUAHHHAHHAAAAAAAAAAAAAAAAAAAAAA')
+        print('UUUAHHHAHHAAAAAAAAAAAAAAAAAAAAAA')
 
         logging.info('Numberical check: population count')
         logging.info(f'{np.sum(training_input) }')
         logging.info(f'{np.sum(training_output) }')
+        print('Numberical check: population count')
+        print(f'{np.sum(training_input) }')
+        print(f'{np.sum(training_output) }')
         # np.set_printoptions(threshold=sys.maxsize)
         # logging.info(f'{training_input}')
-        logging.info(f'{training_input.shape}')
-        logging.info('len keep_list, aa')
-        logging.info(f'{len(keep_list)}, {len(aa)}')
+        logging.info(f'Coef to keep: {len(kmer_keep_list)}, Ncoefs: {len(aa)}')
         logging.info(' ')
-        logging.info('sum aa')
-        logging.info(sum(aa))
-        logging.info(' ')
+        print(f'Coef to keep: {len(kmer_keep_list)}, Ncoefs: {len(aa)}')
+        print(' ')
         aaa = 0
         for i in aa:
             if i == 0:
                 aaa += 1
-        logging.info(f'sum coefficient {aaa}')
+        logging.info(f'N of non-zero coefficients: {aaa}')
+        print(f'N of non-zero coefficients: {aaa}')
 
-        def seq_fil(rep, keep_list):
-            y = KmerSequenceEncoder.encode_sequence(rep, EncoderParams(model={'k': params['k']},
+        def seq_fil(seq, kmer_keep_list):
+            """
+            Return True if the seq has a kmer contained in the kmer_keep_list
+                False otherwise.
+            """
+            y = KmerSequenceEncoder.encode_sequence(seq, EncoderParams(model={'k': params['k']},
                                                                        label_config=None,
                                                                        result_path=path,
                                                                        pool_size=4))
+
             if y is not None:
                 for i in y:
-                    if i in keep_list:
+                    if i in kmer_keep_list:
                         return True
             return False
 
         dataset3.repertoires = []
         for i, rep in enumerate(d1.repertoires):
-            list_bad = list(filter(lambda x: seq_fil(x, keep_list), rep.sequences))  # This is quite brute force
-            if not list_bad:
+            list_seq_filted = list(filter(lambda seq: seq_fil(seq, kmer_keep_list), rep.sequences)) 
+            if not list_seq_filted:
                 continue
+            logging.info(f'SEQ TO KEEP: {len(list_seq_filted)} out of {len(rep.sequences)}')
+            print(f'SEQ TO KEEP: {len(list_seq_filted)} out of {len(rep.sequences)}')
 
-            new_repertoire = Repertoire.build_from_sequence_objects(list_bad,
+            new_repertoire = Repertoire.build_from_sequence_objects(list_seq_filted,
                                                                     path=params['result_path'],
                                                                     metadata=rep.metadata)
 
-            logging.info(f'{len(rep.sequences)}, {len(list_bad)}, {len(new_repertoire.sequences)}')
             dataset3.repertoires.append(new_repertoire)
 
+        """
         # THE FOLLOWING PART is not needed, but it is to check what is going on later.
         # eg. The reports are identical.
         encoder3 = KmerFrequencyEncoder.build_object(dataset3, **{
@@ -148,9 +159,10 @@ class PreprocessorLasso(Preprocessor):
         
         logging.info('remaining ')
         logging.info(f'{len(d1.encoded_data.feature_names)}, {len(d3.encoded_data.feature_names)}')
-        keep_list = [x for (i, x) in zip(aa, d1.encoded_data.feature_names) if i != 0]
+        kmer_keep_list = [x for (i, x) in zip(aa, d1.encoded_data.feature_names) if i != 0]
         logging.info(f'keep list now {len(keep_list)}') 
-        if keep_list:
+        """
+        if kmer_keep_list:
             return dataset3
         return dataset
 
