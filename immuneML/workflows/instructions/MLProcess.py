@@ -43,7 +43,6 @@ class MLProcess:
         assert all([isinstance(metric, Metric) for metric in metrics]), \
             "MLProcess: metrics are not set to be an instance of Metric."
         self.metrics = metrics
-        self.metrics.add(Metric.BALANCED_ACCURACY)
         self.optimization_metric = optimization_metric
         self.ml_reports = ml_reports if ml_reports is not None else []
         self.encoding_reports = encoding_reports if encoding_reports is not None else []

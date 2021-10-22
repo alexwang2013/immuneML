@@ -1,8 +1,9 @@
-from sklearn.linear_model import LinearRegression as SklearnLinearRegression
-from immuneML.ml_methods.SklearnMethod import SklearnMethod
-from scripts.specification_util import update_docs_per_mapping
-from immuneML.data_model.encoded_data.EncodedData import EncodedData
 from pathlib import Path
+
+from sklearn.linear_model import LinearRegression as SklearnLinearRegression
+
+from immuneML.data_model.encoded_data.EncodedData import EncodedData
+from immuneML.ml_methods.SklearnMethod import SklearnMethod
 
 
 class LinearRegression(SklearnMethod):
@@ -60,7 +61,7 @@ class LinearRegression(SklearnMethod):
 
     def get_params(self):
         params = self.model.get_params()
-        params["coefficients"] = self.model.coef_[0].tolist()
+        params["coefficients"] = self.model.coef_.tolist()
         params["intercept"] = self.model.intercept_.tolist()
         return params
 
@@ -69,3 +70,13 @@ class LinearRegression(SklearnMethod):
 
     def store(self, path: Path, feature_names=None, details_path: Path = None):
         return
+
+    def fit_by_cross_validation(self, encoded_data: EncodedData, number_of_splits: int = 5, label_name: str = None, cores_for_training: int = -1,
+                                optimization_metric='r2'):
+
+        self.class_mapping = {}
+        self.feature_names = encoded_data.feature_names
+        self.label_name = label_name
+
+        self.model = self._fit_by_cross_validation(encoded_data.examples, encoded_data.labels[label_name], number_of_splits, label_name, cores_for_training,
+                                                   optimization_metric)

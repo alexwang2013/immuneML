@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 from immuneML.data_model.dataset.Dataset import Dataset
+from immuneML.ml_methods.LinearRegression import LinearRegression
 from immuneML.ml_methods.LogisticRegression import LogisticRegression
 from immuneML.ml_methods.MLMethod import MLMethod
 from immuneML.ml_methods.RandomForestClassifier import RandomForestClassifier
@@ -274,7 +275,7 @@ class MotifSeedRecovery(MLReport):
 
         run_report = True
 
-        if not any([isinstance(self.method, legal_method) for legal_method in (RandomForestClassifier, LogisticRegression, SVM)]):
+        if not any([isinstance(self.method, legal_method) for legal_method in (RandomForestClassifier, LogisticRegression, SVM, LinearRegression)]):
             logging.warning(f"{location} report can only be created for RandomForestClassifier, LogisticRegression or SVM, but got "
                             f"{type(self.method).__name__} instead. {location} report will not be created.")
             run_report = False
