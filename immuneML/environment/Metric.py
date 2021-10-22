@@ -14,6 +14,7 @@ class Metric(Enum):
     AUC = "roc_auc_score"
     LOG_LOSS = "log_loss"
     R2 = "r2_score"
+    MEAN_SQUARED_ERROR = "mean_squared_error"
 
     @staticmethod
     def get_search_criterion(metric):
