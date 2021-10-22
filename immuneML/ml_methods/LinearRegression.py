@@ -1,7 +1,8 @@
 from pathlib import Path
-
+from sklearn.metrics import SCORERS
 from sklearn.linear_model import LinearRegression as SklearnLinearRegression
 
+from sklearn.model_selection import GridSearchCV
 from immuneML.data_model.encoded_data.EncodedData import EncodedData
 from immuneML.ml_methods.SklearnMethod import SklearnMethod
 
@@ -80,3 +81,31 @@ class LinearRegression(SklearnMethod):
 
         self.model = self._fit_by_cross_validation(encoded_data.examples, encoded_data.labels[label_name], number_of_splits, label_name, cores_for_training,
                                                    optimization_metric)
+
+    def _fit_by_cross_validation(self, X, y, number_of_splits: int = 5, label_name: str = None, cores_for_training: int = 1,
+                                 optimization_metric: str = "balanced_accuracy"):
+
+        model = self._get_ml_model()
+        scoring = optimization_metric
+
+        if optimization_metric not in SCORERS.keys():
+            scoring = "balanced_accuracy"
+            warnings.warn(
+                f"{self.__class__.__name__}: specified optimization metric ({optimization_metric}) is not defined as a sklearn scoring function, using {scoring} instead... ")
+
+        if not self.show_warnings:
+            warnings.simplefilter("ignore")
+            os.environ["PYTHONWARNINGS"] = "ignore"
+
+        self.model = GridSearchCV(model, param_grid=self._parameter_grid, cv=number_of_splits, n_jobs=cores_for_training,
+                                  scoring=scoring, refit=True)
+        self.model.fit(X, y)
+
+        if not self.show_warnings:
+            del os.environ["PYTHONWARNINGS"]
+            warnings.simplefilter("always")
+
+        self.model = self.model.best_estimator_  # do not leave RandomSearchCV object to be in models, use the best estimator instead
+
+        return self.model
+
