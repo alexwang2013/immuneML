@@ -47,6 +47,8 @@ class MLSettingsPerformance(TrainMLModelReport):
     def build_object(cls, **kwargs):
         location = "MLSettingsPerformance"
 
+        ParameterValidator.assert_keys(kwargs.keys(), ['single_axis_labels', 'x_label_position', 'y_label_position', 'vertical_grouping', 'name'],
+                                       location, 'report definition')
         single_axis_labels = kwargs["single_axis_labels"]
         ParameterValidator.assert_type_and_value(single_axis_labels, bool, location, "single_axis_labels")
 
@@ -60,9 +62,10 @@ class MLSettingsPerformance(TrainMLModelReport):
             y_label_position = None
 
         name = kwargs["name"] if "name" in kwargs else None
-        return MLSettingsPerformance(single_axis_labels, x_label_position, y_label_position, name)
+        return MLSettingsPerformance(single_axis_labels, x_label_position, y_label_position, name, vertical_grouping=kwargs['vertical_grouping'])
 
-    def __init__(self, single_axis_labels, x_label_position, y_label_position, name: str = None, state: TrainMLModelState = None, result_path: Path = None):
+    def __init__(self, single_axis_labels, x_label_position, y_label_position, name: str = None, state: TrainMLModelState = None,
+                 result_path: Path = None, vertical_grouping: str = 'encoding'):
         super().__init__(name)
 
         self.single_axis_labels = single_axis_labels
@@ -72,7 +75,7 @@ class MLSettingsPerformance(TrainMLModelReport):
         self.result_path = None
         self.name = name
         self.result_name = "performance"
-        self.vertical_grouping = "encoding"
+        self.vertical_grouping = vertical_grouping
 
     def _generate(self) -> ReportResult:
         PathBuilder.build(self.result_path)
@@ -85,7 +88,10 @@ class MLSettingsPerformance(TrainMLModelReport):
         return ReportResult(self.name, output_tables=[result_table], output_figures=output_figures)
 
     def _get_vertical_grouping(self, assessment_item):
-        return assessment_item.hp_setting.encoder_name
+        if self.vertical_grouping == "encoding":
+            return assessment_item.hp_setting.encoder_name
+        else:
+            return assessment_item.hp_setting.preproc_sequence_name
 
     def _get_color_grouping(self, assessment_item):
         return assessment_item.hp_setting.ml_method_name

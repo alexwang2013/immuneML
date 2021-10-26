@@ -1,8 +1,11 @@
+import os
+import warnings
 from pathlib import Path
-from sklearn.metrics import SCORERS
-from sklearn.linear_model import LinearRegression as SklearnLinearRegression
 
+from sklearn.linear_model import LinearRegression as SklearnLinearRegression
+from sklearn.metrics import SCORERS
 from sklearn.model_selection import GridSearchCV
+
 from immuneML.data_model.encoded_data.EncodedData import EncodedData
 from immuneML.ml_methods.SklearnMethod import SklearnMethod
 
@@ -83,13 +86,13 @@ class LinearRegression(SklearnMethod):
                                                    optimization_metric)
 
     def _fit_by_cross_validation(self, X, y, number_of_splits: int = 5, label_name: str = None, cores_for_training: int = 1,
-                                 optimization_metric: str = "balanced_accuracy"):
+                                 optimization_metric: str = "r2"):
 
         model = self._get_ml_model()
         scoring = optimization_metric
 
         if optimization_metric not in SCORERS.keys():
-            scoring = "balanced_accuracy"
+            scoring = "r2"
             warnings.warn(
                 f"{self.__class__.__name__}: specified optimization metric ({optimization_metric}) is not defined as a sklearn scoring function, using {scoring} instead... ")
 
