@@ -18,7 +18,7 @@ class Metric(Enum):
 
     @staticmethod
     def get_search_criterion(metric):
-        if metric in [Metric.LOG_LOSS]:
+        if metric in [Metric.LOG_LOSS, Metric.MEAN_SQUARED_ERROR]:
             return min
         else:
             return max
