@@ -40,8 +40,10 @@ class Repertoire(DatasetItem):
     def process_custom_lists(custom_lists):
         if custom_lists:
             field_list = list(custom_lists.keys())
-            values = [[NumpyHelper.get_numpy_representation(el) for el in custom_lists[field]] for field in custom_lists.keys()]
-            dtype = [(field, np.array(values[index]).dtype) for index, field in enumerate(custom_lists.keys())]
+            # values = [[NumpyHelper.get_numpy_representation(el) for el in custom_lists[field]] for field in custom_lists.keys()]
+            # dtype = [(field, np.array(values[index]).dtype) for index, field in enumerate(custom_lists.keys())]
+            values = [custom_lists[field] for field in custom_lists.keys()]
+            dtype = [(field, np.object) for field in custom_lists.keys()]
         else:
             field_list, values, dtype = [], [], []
         return field_list, values, dtype
