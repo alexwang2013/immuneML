@@ -94,8 +94,12 @@ class Repertoire(DatasetItem):
         for field in Repertoire.FIELDS:
             if eval(field) is not None and not all(el is None for el in eval(field)):
                 field_list.append(field)
-                values.append([NumpyHelper.get_numpy_representation(val) if val is not None else np.nan for val in eval(field)])
-                dtype.append((field, np.array(values[-1]).dtype))
+                #values.append([NumpyHelper.get_numpy_representation(val) if val is not None else np.nan for val in eval(field)])
+                #dtype.append((field, np.array(values[-1]).dtype))
+                values.append(eval(field))
+                dtype.append((field, np.object))
+
+        dtype = np.dtype(dtype)
 
         repertoire_matrix = np.array(list(map(tuple, zip(*values))), order='F', dtype=dtype)
         np.save(str(data_filename), repertoire_matrix, allow_pickle=False)
