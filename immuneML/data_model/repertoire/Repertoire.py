@@ -40,8 +40,10 @@ class Repertoire(DatasetItem):
     def process_custom_lists(custom_lists):
         if custom_lists:
             field_list = list(custom_lists.keys())
-            values = [[NumpyHelper.get_numpy_representation(el) for el in custom_lists[field]] for field in custom_lists.keys()]
-            dtype = [(field, np.array(values[index]).dtype) for index, field in enumerate(custom_lists.keys())]
+            values = [custom_lists[field] for field in custom_lists.keys()]
+            dtype = [(field, np.object) for field in custom_lists.keys()]
+            ##values = [[NumpyHelper.get_numpy_representation(el) for el in custom_lists[field]] for field in custom_lists.keys()]
+            #dtype = [(field, np.array(values[index]).dtype) for index, field in enumerate(custom_lists.keys())]
         else:
             field_list, values, dtype = [], [], []
         return field_list, values, dtype
@@ -92,11 +94,14 @@ class Repertoire(DatasetItem):
         for field in Repertoire.FIELDS:
             if eval(field) is not None and not all(el is None for el in eval(field)):
                 field_list.append(field)
-                values.append([NumpyHelper.get_numpy_representation(val) if val is not None else np.nan for val in eval(field)])
-                dtype.append((field, np.array(values[-1]).dtype))
+                values.append(eval(field))
+                dtype.append((field, np.object))
+                #values.append([NumpyHelper.get_numpy_representation(val) if val is not None else np.nan for val in eval(field)])
+                #dtype.append((field, np.array(values[-1]).dtype))
+        dtype = np.dtype(dtype)
 
         repertoire_matrix = np.array(list(map(tuple, zip(*values))), order='F', dtype=dtype)
-        np.save(str(data_filename), repertoire_matrix, allow_pickle=False)
+        np.save(str(data_filename), repertoire_matrix, allow_pickle=True)
 
         metadata_filename = path / f"{filename_base}_metadata.yaml"
         metadata = {} if metadata is None else metadata
@@ -213,7 +218,7 @@ class Repertoire(DatasetItem):
 
     def load_data(self):
         if self.data is None or (isinstance(self.data, weakref.ref) and self.data() is None):
-            data = np.load(self.data_filename, allow_pickle=False)
+            data = np.load(self.data_filename, allow_pickle=True)
             self.data = weakref.ref(data) if EnvironmentSettings.low_memory else data
         data = self.data() if EnvironmentSettings.low_memory else self.data
         self.element_count = data.shape[0]
