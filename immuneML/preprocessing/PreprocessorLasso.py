@@ -1,5 +1,6 @@
-from pathlib import Path
 import logging
+from pathlib import Path
+
 import numpy as np
 import pandas as pd
 from sklearn.linear_model import Lasso
@@ -30,41 +31,36 @@ class PreprocessorLasso(Preprocessor):
         self.k = k
         self.alpha = alpha
         self.criteria = criteria
+        self.encoder = None
 
-    def process_dataset(self, dataset: RepertoireDataset, result_path: Path = None):
+    def process_dataset(self, dataset: RepertoireDataset, result_path: Path, context: dict = None, learn_model: bool = True):
         # Prepare the parameter dictionary for the process method
         params = {'result_path': result_path,
                   'k': self.k,
                   'alpha': self.alpha,
                   'criteria': self.criteria,
                   'label': self.label}
-        """"
-        if self.lower_limit > -1:
-            params["lower_limit"] = self.lower_limit
-        if self.upper_limit > -1:
-            params["upper_limit"] = self.upper_limit
-        """
-        return PreprocessorLasso.process(dataset, params)
 
-    @staticmethod
-    def process(dataset: RepertoireDataset, params: dict) -> RepertoireDataset:
+        return self._process(dataset, params, learn_model)
+
+    def _process(self, dataset: RepertoireDataset, params: dict, learn_model: bool) -> RepertoireDataset:
         path = params['result_path'] / str(params['alpha']) / str(params['k'])
         PathBuilder.build(path)
 
         dataset3 = dataset.clone()
 
-        encoder = KmerFrequencyEncoder.build_object(dataset, **{
+        self.encoder = KmerFrequencyEncoder.build_object(dataset, **{
                 "normalization_type": NormalizationType.RELATIVE_FREQUENCY.name,
                 "reads": ReadsType.UNIQUE.name,
                 "sequence_encoding": SequenceEncodingType.CONTINUOUS_KMER.name,
                 "sequence_type": SequenceType.AMINO_ACID.name,
                 "k": params['k']
-            })
+            }) if self.encoder is None else self.encoder
 
-        d1 = encoder.encode(dataset, EncoderParams(
+        d1 = self.encoder.encode(dataset, EncoderParams(
             result_path=path / "1/",
             label_config=LabelConfiguration([Label(params['label'])]),  # In the yaml, user specifies label
-            learn_model=True,
+            learn_model=learn_model,
             model={},
             filename="dataset.pkl"
         ))
@@ -73,7 +69,7 @@ class PreprocessorLasso(Preprocessor):
         training_output = np.array(d1.encoded_data.labels[params['label']])
 
         diomio = Lasso(alpha=params['alpha'], fit_intercept=True, normalize=True, max_iter=5000)
-        diomio.fit(training_input, training_output) # , sample_weight=sw_train)
+        diomio.fit(training_input, training_output)  # , sample_weight=sw_train)
         aa = diomio.coef_
 
         kmer_keep_list = [x for (i, x) in zip(aa, d1.encoded_data.feature_names) if i != 0]

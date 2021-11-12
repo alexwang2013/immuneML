@@ -48,26 +48,17 @@ class HPUtil:
             return Constants.NOT_COMPUTED
 
     @staticmethod
-    def preprocess_dataset(dataset: Dataset, preproc_sequence: list, path: Path, context: dict = None, hp_setting: HPSetting = None) -> Dataset:
-        if dataset is not None:
-            if isinstance(preproc_sequence, list) and len(preproc_sequence) > 0:
-                PathBuilder.build(path)
-                tmp_dataset = dataset.clone() if context is None or "dataset" not in context else context["dataset"]
+    def preprocess_dataset(dataset: Dataset, hp_setting: HPSetting, path: Path, context: dict = None, learn_model: bool = True) -> Dataset:
+        if dataset is not None and isinstance(hp_setting.preproc_sequence, list) and len(hp_setting.preproc_sequence) > 0:
+            PathBuilder.build(path)
+            preprocessed_dataset = dataset.clone()
 
-                for preprocessing in preproc_sequence:
-                    tmp_dataset = preprocessing.process_dataset(tmp_dataset, path)
+            for preprocessing in hp_setting.preproc_sequence:
+                preprocessed_dataset = preprocessing.process_dataset(preprocessed_dataset, path, context, learn_model)
 
-                if context is not None and "dataset" in context:
-                    context["preprocessed_dataset"] = {str(hp_setting): tmp_dataset}
-                    indices = [i for i in range(context["dataset"].get_example_count())
-                               if context["dataset"].repertoires[i].identifier in dataset.get_example_ids()]
-                    preprocessed_dataset = tmp_dataset.make_subset(indices, path, Dataset.PREPROCESSED)
-                else:
-                    preprocessed_dataset = tmp_dataset
-
-                return preprocessed_dataset
-            else:
-                return dataset
+            return preprocessed_dataset
+        else:
+            return dataset
 
     @staticmethod
     def train_method(label: str, dataset, hp_setting: HPSetting, path: Path, train_predictions_path, ml_details_path, cores_for_training, optimization_metric) -> MLMethod:

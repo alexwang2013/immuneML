@@ -138,7 +138,7 @@ class RepertoireDataset(Dataset):
 
         metadata_file = self._build_new_metadata(example_indices, path / f"{dataset_type}_metadata.csv")
         new_dataset = RepertoireDataset(repertoires=[self.repertoires[i] for i in example_indices], labels=copy.deepcopy(self.labels),
-                                        metadata_file=metadata_file, identifier=str(uuid.uuid1()))
+                                        metadata_file=metadata_file, identifier=str(uuid.uuid4().hex))
 
         return new_dataset
 

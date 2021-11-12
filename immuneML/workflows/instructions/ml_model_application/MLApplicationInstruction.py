@@ -70,8 +70,7 @@ class MLApplicationInstruction(Instruction):
 
         dataset = self.state.dataset
 
-        if self.state.hp_setting.preproc_sequence is not None:
-            dataset = HPUtil.preprocess_dataset(dataset, self.state.hp_setting.preproc_sequence, self.state.path)
+        dataset = HPUtil.preprocess_dataset(dataset, self.state.hp_setting, self.state.path, learn_model=False)
 
         dataset = HPUtil.encode_dataset(dataset, self.state.hp_setting, self.state.path, learn_model=False, number_of_processes=self.state.pool_size,
                                         label_configuration=self.state.label_config, context={}, encode_labels=False)
